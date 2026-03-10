@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini PvP Master | Chronicles</title>
+    <link rel="icon" type="image/svg+xml"
+        href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23c5a059" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z"/><path d="M12 2v4"/><path d="M12 6L7 14h10l-5-8z"/><path d="M3 7l4 7"/><path d="M21 7l-4 7"/><path d="M3 17l4-3"/><path d="M21 17l-4-3"/><path d="M12 22l-5-8"/><path d="M12 22l5-8"/></svg>'>
+
+    <!-- Fonts: Fantasy, Sci-Fi, Horror, Steampunk, Classic -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Metamorphous&family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Orbitron:wght@400;700&family=Share+Tech+Mono&family=Creepster&family=Nosifer&family=Rye&family=MedievalSharp&family=Crimson+Text:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dnd-dark': 'var(--bg-main)',
+                        'dnd-panel': 'var(--bg-panel)',
+                        'dnd-gold': 'var(--accent-main)',
+                        'dnd-gold-dim': 'var(--accent-dim)',
+                        'p1-blue': 'var(--p1-color)',
+                        'p2-red': 'var(--p2-color)',
+                    },
+                    fontFamily: {
+                        'title': ['var(--font-title)', 'serif'],
+                        'fantasy': ['var(--font-body)', 'cursive'],
+                        'body': ['Lato', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- IMPORT MAP -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <style>
+        /* Variabili di Default (Fallback Fantasy) */
+        :root {
+            --bg-main: #0b0c10;
+            --bg-panel: #1f2833;
+            --accent-main: #c5a059;
+            --accent-dim: #8a703e;
+            --p1-color: #45a29e;
+            --p2-color: #e74c3c;
+            --font-title: 'Cinzel';
+            --font-body: 'Metamorphous';
+            --rounded-btn: 0.5rem;
+            --card-border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-main);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--p1-color);
+            border-radius: 4px;
+        }
+
+        .glow-gold {
+            text-shadow: 0 0 10px var(--accent-main);
+        }
+
+        .dice-btn {
+            transition: all 0.2s;
+            color: var(--accent-dim);
+        }
+
+        .dice-btn:hover {
+            transform: translateY(-2px);
+            color: var(--accent-main);
+        }
+
+        .dice-btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-theme {
+            background-color: transparent;
+            border: 1px solid var(--accent-dim);
+            color: var(--accent-dim);
+            font-family: var(--font-title);
+            transition: all 0.3s ease;
+            border-radius: var(--rounded-btn);
+        }
+
+        .btn-theme:hover {
+            background-color: var(--accent-dim);
+            color: var(--bg-main);
+            border-color: var(--accent-main);
+            box-shadow: 0 0 10px var(--accent-dim);
+        }
+
+        .btn-action {
+            background: linear-gradient(to bottom, var(--accent-main), var(--accent-dim));
+            color: var(--bg-main);
+            font-family: var(--font-title);
+            font-weight: bold;
+            border: 1px solid var(--accent-main);
+            border-radius: var(--rounded-btn);
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            filter: brightness(1.2);
+            box-shadow: 0 0 15px var(--accent-main);
+        }
+
+        .btn-action:disabled {
+            filter: grayscale(1);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .input-theme {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--accent-dim);
+            color: #eee;
+            font-family: var(--font-body);
+            border-radius: var(--rounded-btn);
+        }
+
+        .input-theme:focus {
+            outline: none;
+            border-color: var(--accent-main);
+            box-shadow: 0 0 5px var(--accent-dim);
+        }
+
+        .palette-btn:hover {
+            transform: scale(1.1);
+            border-color: white;
+        }
+
+        #dice-canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* --- NUOVI STILI PER MIGLIORARE LA RESA GRAFICA --- */
+
+        /* Card Messaggio Storia */
+        .story-card {
+            background: linear-gradient(135deg, var(--bg-panel) 0%, rgba(0, 0, 0, 0.8) 100%);
+            border: 1px solid var(--accent-dim);
+            border-left: 4px solid var(--accent-main);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            border-radius: var(--rounded-btn);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .story-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+            border-color: var(--accent-main);
+        }
+
+        /* Decorazione Sfondo Card (Filigrana) */
+        .story-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/black-scales.png');
+            /* Texture leggera */
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        /* Box Privato (Sussurri) */
+        .private-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 2px solid;
+            /* Colore definito inline o via classe specifica */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0 var(--rounded-btn) var(--rounded-btn) 0;
+            font-style: italic;
+        }
+
+        /* --- SFONDI TEMATICI --- */
+        /* --- SFONDI ANIMATI --- */
+        #dynamic-background {
+            transition: all 1s ease;
+            background-color: var(--bg-main);
+            /* Colore base di fondo */
+        }
+
+        /* 1. FANTASY (Nebbia Arcana e Polvere di Fata) */
+        .bg-fantasy {
+            background-color: #0b0c10;
+            background-image: radial-gradient(circle at 15% 50%, rgba(197, 160, 89, 0.08), transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(69, 162, 158, 0.08), transparent 50%);
+        }
+
+        .bg-fantasy::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(2px 2px at 40px 60px, #c5a059 100%, transparent),
+                radial-gradient(2px 2px at 20px 50px, #ffffff 100%, transparent),
+                radial-gradient(2px 2px at 30px 20px, #45a29e 100%, transparent);
+            background-size: 200px 200px;
+            animation: magic-dust 20s infinite linear;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .bg-fantasy::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01' numOctaves='3' result='noise'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 3 -1' in='noise' result='coloredNoise'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+            animation: mist-drift 40s infinite linear alternate;
+            pointer-events: none;
+        }
+
+        /* 2. SCI-FI (Griglia Cyber e Laser Scan) */
+        .bg-scifi {
+            background-color: #02020c;
+            background-image:
+                linear-gradient(rgba(0, 243, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: pan-grid 15s infinite linear;
+            box-shadow: inset 0 0 100px rgba(0, 243, 255, 0.1);
+        }
+
+        .bg-scifi::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 200%;
+            background: linear-gradient(to bottom, transparent, rgba(0, 243, 255, 0.05) 50%, rgba(0, 243, 255, 0.2) 50%, transparent);
+            background-size: 100% 10px;
+            animation: scanline 10s infinite linear;
+            pointer-events: none;
+        }
+
+        /* 3. HORROR (Pulsazione di Sangue e Tenebre) */
+        .bg-horror {
+            background-color: #0c0101;
+            background-image: radial-gradient(circle at center, transparent 30%, rgba(100, 0, 0, 0.5) 100%);
+            animation: horror-breathe 6s infinite ease-in-out;
+        }
+
+        .bg-horror::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: repeating-radial-gradient(circle at 0 0, transparent 0, #0c0101 40px), repeating-linear-gradient(#30000055, #30000055);
+            opacity: 0.15;
+            animation: creeping-dread 20s infinite alternate linear;
+            pointer-events: none;
+        }
+
+        /* 4. STEAMPUNK (Ingranaggi Giganti in Movimento) */
+        .bg-steampunk {
+            background-color: #1a1510;
+            background-image: radial-gradient(circle at 50% 120%, rgba(205, 127, 50, 0.2), transparent 70%);
+        }
+
+        .bg-steampunk::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23cd7f32' opacity='0.15' d='M50 15A35 35 0 1 0 85 50 35 35 0 0 0 50 15Zm0 55A20 20 0 1 1 70 50 20 20 0 0 1 50 70Z'/%3E%3Cpath fill='%23cd7f32' opacity='0.15' d='M45 5h10v15H45Zm0 80h10v15H45Zm35-45h15v10H80Zm-80 0h15v10H5Zm11.82-26.82l10.6 10.6-7.07 7.07-10.6-10.6Zm49.5 49.5l10.6 10.6-7.07 7.07-10.6-10.6Zm0-63.64l7.07 7.07-10.6 10.6-7.07-7.07Zm-49.5 49.5l7.07 7.07-10.6 10.6-7.07-7.07Z'/%3E%3C/svg%3E");
+            background-size: 300px 300px;
+            background-position: center;
+            animation: spin-gear 40s infinite linear;
+            pointer-events: none;
+        }
+
+        .bg-steampunk::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23b87333' opacity='0.1' d='M50 15A35 35 0 1 0 85 50 35 35 0 0 0 50 15Zm0 55A20 20 0 1 1 70 50 20 20 0 0 1 50 70Z'/%3E%3Cpath fill='%23b87333' opacity='0.1' d='M45 5h10v15H45Zm0 80h10v15H45Zm35-45h15v10H80Zm-80 0h15v10H5Zm11.82-26.82l10.6 10.6-7.07 7.07-10.6-10.6Zm49.5 49.5l10.6 10.6-7.07 7.07-10.6-10.6Zm0-63.64l7.07 7.07-10.6 10.6-7.07-7.07Zm-49.5 49.5l7.07 7.07-10.6 10.6-7.07-7.07Z'/%3E%3C/svg%3E");
+            background-size: 200px 200px;
+            background-position: 80% 80%;
+            background-repeat: repeat;
+            animation: spin-gear-reverse 30s infinite linear;
+            pointer-events: none;
+        }
+
+        /* 5. DRUID (Lucciole e Spore Danzanti) */
+        .bg-druid {
+            background-color: #061206;
+            background-image: radial-gradient(circle at 10% 90%, rgba(74, 222, 128, 0.1), transparent 50%),
+                radial-gradient(circle at 90% 10%, rgba(20, 80, 20, 0.1), transparent 50%);
+        }
+
+        .bg-druid::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(2px 2px at 20px 30px, #4ade80 100%, transparent),
+                radial-gradient(3px 3px at 50px 70px, #2dd4bf 100%, transparent),
+                radial-gradient(2px 2px at 90px 40px, #fcd34d 100%, transparent);
+            background-size: 150px 150px;
+            opacity: 0.6;
+            animation: firefly-dance 15s infinite ease-in-out alternate;
+            pointer-events: none;
+        }
+
+        /* 6. ABYSS (Profondità Marine e Bolle) */
+        .bg-abyss {
+            background: linear-gradient(180deg, #02040a 0%, #001020 80%, #000a14 100%);
+        }
+
+        .bg-abyss::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 191, 255, 0.1) 0%, transparent 60%);
+            animation: water-shimmer 8s infinite ease-in-out alternate;
+            pointer-events: none;
+        }
+
+        .bg-abyss::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(3px 3px at 50px 100px, rgba(255, 255, 255, 0.2) 100%, transparent),
+                radial-gradient(4px 4px at 150px 200px, rgba(0, 255, 255, 0.1) 100%, transparent);
+            background-size: 250px 250px;
+            animation: bubbles-rise 20s infinite linear;
+            pointer-events: none;
+        }
+
+        /* 7. VAMPIRE (Velluto Gotico) */
+        .bg-vampire {
+            background-color: #121212;
+            background-image: radial-gradient(circle at center, #300 0%, #000 80%);
+        }
+
+        .bg-vampire::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            animation: bat-flicker 8s infinite linear;
+            pointer-events: none;
+        }
+
+        .bg-vampire::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(200, 0, 0, 0.05) 0%, transparent 60%);
+            animation: horror-pulse-vamp 6s infinite alternate;
+            pointer-events: none;
+        }
+
+        /* 8. CARTA (Texture Statica) */
+        .bg-paper {
+            background-color: #e3dac9;
+            background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png');
+            filter: sepia(0.3) contrast(0.9);
+        }
+
+        .bg-paper::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 10% 20%, rgba(255, 200, 100, 0.1) 0%, transparent 40%);
+            animation: candle-flicker 4s infinite ease-in-out alternate;
+            pointer-events: none;
+        }
+
+        /* CLASSE PER DISABILITARE ANIMAZIONI */
+        .disable-bg-animations,
+        .disable-bg-animations::before,
+        .disable-bg-animations::after {
+            animation: none !important;
+        }
+
+        /* ANIMAZIONI */
+        @keyframes magic-dust {
+            0% {
+                background-position: 0px 0px;
+            }
+
+            100% {
+                background-position: 200px -200px;
+            }
+        }
+
+        @keyframes mist-drift {
+            0% {
+                transform: scale(1.1) translate(0, 0);
+            }
+
+            100% {
+                transform: scale(1.2) translate(-20px, 10px);
+            }
+        }
+
+        @keyframes pan-grid {
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 50px 50px;
+            }
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateY(-100%);
+            }
+
+            100% {
+                transform: translateY(100%);
+            }
+        }
+
+        @keyframes horror-breathe {
+
+            0%,
+            100% {
+                box-shadow: inset 0 0 100px #400000;
+                opacity: 1;
+            }
+
+            50% {
+                box-shadow: inset 0 0 200px #800000;
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes creeping-dread {
+            0% {
+                background-position: 0 0;
+                transform: scale(1);
+            }
+
+            100% {
+                background-position: 100px 100px;
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes spin-gear {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin-gear-reverse {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(-360deg);
+            }
+        }
+
+        @keyframes firefly-dance {
+            0% {
+                background-position: 0 0;
+                opacity: 0.4;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
+
+            100% {
+                background-position: -50px -50px;
+                opacity: 0.4;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes bubbles-rise {
+            0% {
+                background-position: 0 250px;
+            }
+
+            100% {
+                background-position: 0 0;
+            }
+        }
+
+        @keyframes bat-flicker {
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 100px 200px;
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes water-shimmer {
+            0% {
+                background-position: 0% 50%;
+                opacity: 0.8;
+            }
+
+            50% {
+                background-position: 100% 50%;
+                opacity: 1;
+            }
+
+            100% {
+                background-position: 0% 50%;
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes horror-pulse-vamp {
+            0% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes candle-flicker {
+
+            0%,
+            100% {
+                opacity: 0.7;
+                transform: translateY(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateY(-5px) scale(1.05);
+            }
+        }
+    </style>
+</head>
+<!-- CORREZIONE: bg-transparent invece di bg-dnd-dark per vedere l'animazione dietro -->
+
+<body
+    class="bg-transparent text-gray-300 font-body h-screen flex flex-col overflow-hidden transition-colors duration-500">
+    <!-- BACKGROUND DINAMICO (Unico per tutta l'app) -->
+    <div id="dynamic-background"
+        class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden transition-all duration-1000"></div>
+
+    <!-- SETTINGS MODAL (Struttura corretta) -->
+    <div id="settings-modal"
+        class="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center backdrop-blur-sm hidden">
+        <div
+            class="bg-dnd-panel border-2 border-dnd-gold p-6 rounded-lg max-w-lg w-full shadow-2xl relative max-h-[90vh] overflow-y-auto z-50">
+            <h2 class="text-2xl font-title text-dnd-gold mb-4 text-center">Configurazione Arcanum</h2>
+
+            <div class="space-y-4">
+                <!-- API & Firebase -->
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-dnd-gold mb-1">Gemini API Key</label>
+                    <input type="password" id="input-api-key" placeholder="AIzaSy..."
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-dnd-gold outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-dnd-gold mb-1">Firebase Config
+                        (JSON)</label>
+                    <textarea id="input-firebase-json" rows="2" placeholder='{ "apiKey": "...", "authDomain": "..." }'
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-xs font-mono text-gray-400 focus:border-dnd-gold outline-none"></textarea>
+                </div>
+
+                <!-- Nomi Giocatori (Griglia) -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-dnd-gold mb-1">Nome P1 (Blu)</label>
+                        <input type="text" id="input-p1-name" placeholder="Giocatore 1"
+                            class="w-full p-2 input-theme text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-dnd-gold mb-1">Nome P2 (Rosso)</label>
+                        <input type="text" id="input-p2-name" placeholder="Giocatore 2"
+                            class="w-full p-2 input-theme text-sm">
+                    </div>
+                </div>
+
+                <!-- Modalità & Tema (Griglia) -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-dnd-gold mb-1">Modalità di
+                            Gioco</label>
+                        <select id="input-game-mode"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-dnd-gold outline-none">
+                            <option value="pvp">⚔️ PvP</option>
+                            <option value="coop">🤝 Co-op</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-dnd-gold mb-1">Stile Grafico</label>
+                        <select id="input-app-theme" onchange="window.applyTheme(this.value)"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-dnd-gold outline-none">
+                            <option value="fantasy">📜 Fantasy Classico</option>
+                            <option value="scifi">🚀 Sci-Fi Cyberpunk</option>
+                            <option value="horror">🩸 Eldritch Horror</option>
+                            <option value="steampunk">⚙️ Steampunk Industrial</option>
+                            <option value="druid">🌿 Druidico Antico</option>
+                            <option value="abyss">🌊 Abissale Profondo</option>
+                            <option value="vampire">🦇 Gotico Vampirico</option>
+                            <option value="paper">📝 Carta & Inchiostro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-dnd-gold mb-1">Layout Testo</label>
+                        <select id="input-text-layout"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-dnd-gold outline-none">
+                            <option value="full">↔️ Piena Larghezza (Standard)</option>
+                            <option value="focus">center 📄 Modalità Focus (Stretto)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-dnd-gold mb-1">Sfondi Animati</label>
+                        <select id="input-animated-bg"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-dnd-gold outline-none"
+                            onchange="window.toggleAnimations(this.value)">
+                            <option value="on">✨ Attivati</option>
+                            <option value="off">⏸️ Disattivati</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Nome Campagna -->
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-dnd-gold mb-1">Nome Campagna</label>
+                    <input type="text" id="input-campaign-id" value="campagna_pvp_01"
+                        class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-dnd-gold outline-none">
+                </div>
+
+                <!-- Dice Customization -->
+                <div class="border-t border-gray-700 pt-4">
+                    <h3 class="text-sm font-title text-gray-400 mb-2 uppercase">Forgia dei Dadi</h3>
+                    <p class="text-xs text-gray-500 mb-2">Importante: Usa un Server Locale per caricare i file GLB/PNG.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="block text-xs uppercase tracking-wider text-dnd-gold mb-1">Texture Atlas</label>
+                        <select id="input-dice-theme"
+                            class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-dnd-gold outline-none">
+                            <option value="atlas_draconic.png" selected>🐉 Atlas Draconico (PNG)</option>
+                            <option value="procedural">🎲 Procedurale (Fallback)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-2">
+                        <label class="block text-xs uppercase tracking-wider text-dnd-gold">Colore Resina Base</label>
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="input-dice-color" value="#eebb00"
+                                class="w-12 h-10 bg-black/50 border border-gray-700 rounded cursor-pointer">
+                            <div class="flex gap-1 flex-wrap">
+                                <button onclick="window.setPalette('#eebb00')"
+                                    class="palette-btn w-6 h-6 rounded-full bg-[#eebb00] border border-gray-600 shadow-sm"
+                                    title="Ambra (Foto)"></button>
+                                <button onclick="window.setPalette('#800020')"
+                                    class="palette-btn w-6 h-6 rounded-full bg-[#800020] border border-gray-600 shadow-sm"
+                                    title="Rubino"></button>
+                                <button onclick="window.setPalette('#2e8b57')"
+                                    class="palette-btn w-6 h-6 rounded-full bg-[#2e8b57] border border-gray-600 shadow-sm"
+                                    title="Smeraldo"></button>
+                                <button onclick="window.setPalette('#4b0082')"
+                                    class="palette-btn w-6 h-6 rounded-full bg-[#4b0082] border border-gray-600 shadow-sm"
+                                    title="Ametista"></button>
+                                <button onclick="window.setPalette('#2f4f4f')"
+                                    class="palette-btn w-6 h-6 rounded-full bg-[#2f4f4f] border border-gray-600 shadow-sm"
+                                    title="Ardesia"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- Chiusura corretta di space-y-4 -->
+
+            <!-- BUTTONS FOOTER (Ora è dentro il pannello) -->
+            <div class="mt-8 flex flex-col md:flex-row justify-between items-center gap-3">
+                <div class="flex gap-2">
+                    <button onclick="window.startDemo()"
+                        class="px-3 py-1 text-xs uppercase tracking-widest btn-theme border-p1-blue text-p1-blue hover:bg-p1-blue/20">🔮
+                        Demo</button>
+                    <button onclick="window.forceUnlock()"
+                        class="px-3 py-1 text-xs uppercase tracking-widest btn-theme border-yellow-600 text-yellow-500 hover:bg-yellow-900/20">🔓
+                        Sblocca</button>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="window.resetCampaignData()"
+                        class="px-3 py-1 text-xs uppercase tracking-widest btn-theme border-red-800 text-red-500 hover:bg-red-900/20">⚠️
+                        Reset</button>
+                    <button onclick="window.closeSettings()"
+                        class="px-4 py-2 btn-theme text-gray-400 border-gray-600">Chiudi</button>
+                    <button onclick="window.saveSettings()" class="px-6 py-2 btn-action">Salva</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D DICE OVERLAY -->
+    <div id="dice-overlay" class="fixed inset-0 z-40 hidden cursor-pointer" onclick="window.closeDiceOverlay()">
+        <div id="dice-canvas-container"></div>
+
+        <!-- Result Display -->
+        <div id="dice-result-container"
+            class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-0 transition-all duration-500 transform scale-75 z-50">
+            <div
+                class="text-dnd-gold font-fantasy text-lg mb-2 glow-gold uppercase tracking-widest bg-black/80 px-6 py-1 rounded-full border border-dnd-gold">
+                Risultato</div>
+            <div class="relative flex items-center justify-center w-40 h-40">
+                <div class="absolute inset-0 bg-black/60 blur-xl rounded-full"></div>
+                <div class="absolute inset-0 bg-dnd-gold/20 blur-md rounded-full animate-pulse"></div>
+                <!-- Content injected by JS -->
+                <span
+                    class="relative flex items-center justify-center drop-shadow-[0_2px_10px_rgba(0,0,0,1)] text-6xl font-bold text-white"
+                    id="dice-value">...</span>
+            </div>
+            <div class="text-gray-400 text-xs mt-4 animate-pulse bg-black/60 px-3 py-1 rounded">Clicca per continuare
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header class="bg-dnd-panel border-b border-gray-800 shadow-lg z-10 flex flex-col relative">
+        <div class="p-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="text-dnd-gold font-fantasy text-2xl tracking-widest glow-gold">CRONACHE</div>
+                <div id="connection-status" class="w-2 h-2 rounded-full bg-gray-500 shadow-lg"></div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="window.exportHistory()" title="Esporta"
+                    class="p-2 text-gray-400 hover:text-white transition hover:bg-white/5 rounded-full">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2">
+                        </path>
+                    </svg>
+                </button>
+                <button onclick="window.openSettings()" title="Impostazioni"
+                    class="p-2 text-gray-400 hover:text-white transition hover:bg-white/5 rounded-full">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div id="stats-bar" class="hidden grid-cols-2 border-t border-gray-800 bg-black/20 text-xs font-title">
+            <div class="p-2 border-r border-gray-800 flex justify-between items-center text-p1-blue">
+                <span>🛡️ P1 HP</span>
+                <input type="number" id="hp-p1" value="100" onchange="window.updateHP('p1')"
+                    class="bg-transparent text-center w-12 border-b border-gray-600 focus:outline-none">
+            </div>
+            <div class="p-2 flex justify-between items-center text-p2-red">
+                <span>🗡️ P2 HP</span>
+                <input type="number" id="hp-p2" value="100" onchange="window.updateHP('p2')"
+                    class="bg-transparent text-center w-12 border-b border-gray-600 focus:outline-none">
+            </div>
+        </div>
+    </header>
+
+    <!-- GAME UI & TOOLBAR -->
+    <!-- Aggiunto 'min-h-0' per sbloccare lo scroll interno su layout Flex -->
+    <main id="game-ui" class="flex-grow flex flex-col relative bg-black/50 overflow-hidden min-h-0">
+        <div id="chat-history" class="flex-grow overflow-y-auto p-4 md:p-8 space-y-8 z-10 scroll-smooth pb-32"></div>
+
+        <div class="bg-dnd-panel border-t border-dnd-gold-dim p-4 z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+            <div class="max-w-4xl mx-auto">
+                <div id="game-status" class="flex justify-between items-center mb-2 text-xs font-title tracking-wider">
+                    <div id="my-status" class="text-gray-400 uppercase">In attesa...</div>
+                    <div id="enemy-status" class="text-gray-600 italic">Nemico in ombra</div>
+                </div>
+
+                <div class="flex gap-2 relative">
+                    <div id="processing-overlay"
+                        class="absolute inset-0 bg-black/90 z-30 flex items-center justify-center rounded backdrop-blur-sm hidden">
+                        <span class="font-title text-sm tracking-widest text-dnd-gold animate-pulse">Il Master sta
+                            pensando...</span>
+                    </div>
+                    <textarea id="action-input" rows="2"
+                        class="flex-grow p-3 text-gray-200 input-theme resize-none bg-transparent"
+                        placeholder="Descrivi la tua azione..."></textarea>
+                    <button id="send-btn" onclick="window.submitAction()"
+                        class="px-6 py-2 btn-action shadow-lg">AGISCI</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ROLE SCREEN (Landing Page) -->
+    <main id="role-screen"
+        class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-dnd-dark transition-colors duration-500">
+        <!-- Background -->
+
+        <!-- Settings Button on Landing Page -->
+        <button onclick="window.openSettings()"
+            class="absolute top-6 right-6 p-2 text-gray-400 hover:text-white transition hover:bg-white/10 rounded-full z-10"
+            title="Impostazioni & Demo">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                </path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+        </button>
+
+        <h2 class="text-4xl font-fantasy text-dnd-gold mb-12 z-10 text-center drop-shadow-md">Scegli il tuo Destino</h2>
+        <div class="flex flex-col md:flex-row gap-8 z-10 w-full max-w-4xl justify-center p-6">
+            <div onclick="window.selectRole('player1')"
+                class="group cursor-pointer flex-1 bg-gradient-to-br from-p1-dark to-black border border-gray-700 hover:border-p1-blue rounded-xl p-8 transition-all hover:scale-105">
+                <h3 id="role-p1-name" class="text-2xl font-title text-center text-p1-blue mb-2">Giocatore 1</h3>
+            </div>
+            <div onclick="window.selectRole('player2')"
+                class="group cursor-pointer flex-1 bg-gradient-to-br from-p2-dark to-black border border-gray-700 hover:border-p2-red rounded-xl p-8 transition-all hover:scale-105">
+                <h3 id="role-p2-name" class="text-2xl font-title text-center text-p2-red mb-2">Giocatore 2</h3>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODULE LOGIC -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, setDoc, updateDoc, getDoc, arrayUnion }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // --- THEME ENGINE ---
+        const APP_THEMES = {
+            fantasy: {
+                '--bg-main': '#0b0c10', '--bg-panel': '#1f2833',
+                '--accent-main': '#c5a059', '--accent-dim': '#8a703e',
+                '--p1-color': '#45a29e', '--p2-color': '#e74c3c',
+                '--font-title': 'Cinzel', '--font-body': 'Metamorphous',
+                '--rounded-btn': '0.5rem'
+            },
+            scifi: {
+                '--bg-main': '#02020c', '--bg-panel': '#050a14',
+                '--accent-main': '#00f3ff', '--accent-dim': '#005f66',
+                '--p1-color': '#ff0099', '--p2-color': '#ccff00',
+                '--font-title': 'Orbitron', '--font-body': 'Share Tech Mono',
+                '--rounded-btn': '0px'
+            },
+            horror: {
+                '--bg-main': '#0f0202', '--bg-panel': '#1a0505',
+                '--accent-main': '#ff3333', '--accent-dim': '#660000',
+                '--p1-color': '#888888', '--p2-color': '#8a0303',
+                '--font-title': 'Creepster', '--font-body': 'Nosifer',
+                '--rounded-btn': '1rem'
+            },
+            steampunk: {
+                '--bg-main': '#1a1510', '--bg-panel': '#2b2015',
+                '--accent-main': '#cd7f32', '--accent-dim': '#b87333', // Bronzo e Rame
+                '--p1-color': '#3498db', '--p2-color': '#e67e22',
+                '--font-title': 'Rye', '--font-body': 'Courier Prime',
+                '--rounded-btn': '4px'
+            },
+            druid: {
+                '--bg-main': '#0a1a0a', '--bg-panel': '#142b14',
+                '--accent-main': '#4ade80', '--accent-dim': '#225522', // Verde Fluorescente e Muschio
+                '--p1-color': '#2dd4bf', '--p2-color': '#fcd34d',
+                '--font-title': 'MedievalSharp', '--font-body': 'Lato',
+                '--rounded-btn': '1.5rem'
+            },
+            abyss: {
+                '--bg-main': '#02040a', '--bg-panel': '#0a1428',
+                '--accent-main': '#00bfff', '--accent-dim': '#004080', // Blu Elettrico e Blu Abisso
+                '--p1-color': '#00ffcc', '--p2-color': '#9933ff',
+                '--font-title': 'Cinzel', '--font-body': 'Lato',
+                '--rounded-btn': '0.8rem'
+            },
+            vampire: {
+                '--bg-main': '#121212', '--bg-panel': '#1e1e1e',
+                '--accent-main': '#e50914', '--accent-dim': '#8b0000', // Rosso Netflix e Sangue scuro
+                '--p1-color': '#a3a3a3', '--p2-color': '#ff0000',
+                '--font-title': 'MedievalSharp', '--font-body': 'Crimson Text',
+                '--rounded-btn': '2px'
+            },
+            paper: {
+                '--bg-main': '#e3dac9', '--bg-panel': '#f4e4bc',
+                '--accent-main': '#2c241b', '--accent-dim': '#5c4a3d',
+                '--p1-color': '#2980b9', '--p2-color': '#c0392b',
+                '--font-title': 'Cinzel', '--font-body': 'Crimson Text',
+                '--rounded-btn': '2px'
+            }
+        };
+
+        window.toggleAnimations = (value) => {
+            const bgEl = document.getElementById('dynamic-background');
+            if (bgEl) {
+                if (value === 'off') {
+                    bgEl.classList.add('disable-bg-animations');
+                } else {
+                    bgEl.classList.remove('disable-bg-animations');
+                }
+            }
+        };
+
+        window.applyTheme = (themeName) => {
+            const theme = APP_THEMES[themeName] || APP_THEMES['fantasy'];
+            const root = document.documentElement;
+
+            // 1. Applica Variabili Colore CSS
+            for (const [key, value] of Object.entries(theme)) {
+                root.style.setProperty(key, value);
+            }
+
+            // 2. Gestione Sfondo Animato
+            const bgEl = document.getElementById('dynamic-background');
+            if (bgEl) {
+                // Rimuove tutte le classi di sfondo precedenti (iniziano con 'bg-')
+                bgEl.className = 'fixed inset-0 z-[-1] pointer-events-none overflow-hidden transition-all duration-1000';
+
+                // Mappa nomi tema -> classi CSS
+                const bgClasses = {
+                    'fantasy': 'bg-fantasy',
+                    'scifi': 'bg-scifi',
+                    'horror': 'bg-horror',
+                    'steampunk': 'bg-steampunk',
+                    'druid': 'bg-druid',
+                    'abyss': 'bg-abyss',
+                    'vampire': 'bg-vampire',
+                    'paper': 'bg-paper'
+                };
+
+                // Applica la nuova classe (default: fantasy)
+                const newClass = bgClasses[themeName] || 'bg-fantasy';
+                bgEl.classList.add(newClass);
+
+                // Ripristina lo stato dell'animazione
+                const animSetting = localStorage.getItem('animated_bg') || 'on';
+                window.toggleAnimations(animSetting);
+            }
+        };
+
+        // --- CONFIGURAZIONE FILES ---
+        const diceModels = {
+            4: 'd4.glb',
+            6: 'd6.glb',
+            8: 'd8.glb',
+            10: 'd10.glb',
+            12: 'd12.glb',
+            20: 'd20.glb'
+        };
+
+        // --- AUDIO ENGINE ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (type === 'roll') {
+                const now = audioCtx.currentTime;
+                triggerWoodHit(now, 0.6, 300); triggerWoodHit(now + 0.15, 0.3, 400); triggerWoodHit(now + 0.35, 0.1, 500);
+            } else if (type === 'click') triggerTone(800, 'triangle', 0.1);
+        }
+        function triggerWoodHit(time, volume, freq) {
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); const filter = audioCtx.createBiquadFilter();
+            const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.1, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+            const noise = audioCtx.createBufferSource(); noise.buffer = buffer;
+            filter.type = "lowpass"; filter.frequency.value = freq;
+            noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(volume, time); gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+            noise.start(time); noise.stop(time + 0.15);
+        }
+        function triggerTone(freq, type, duration) {
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime); gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration); osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // --- THREE.JS ENGINE ---
+        let scene, camera, renderer, diceMesh, diceWire, animationFrameId;
+        const diceOverlay = document.getElementById('dice-overlay');
+        const diceCanvasContainer = document.getElementById('dice-canvas-container');
+        const resultText = document.getElementById('dice-value');
+        const resultContainer = document.getElementById('dice-result-container');
+        let gltfLoader, textureLoader;
+
+        let diceColor = new THREE.Color(0xeebb00);
+        let loadedAtlas = null;
+
+        // Bind global functions for HTML access
+        window.setPalette = (color) => { document.getElementById('input-dice-color').value = color; };
+
+        // Texture Procedurale (Fallback)
+        function generateProceduralTexture(type) {
+            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(0, 0, 1024, 1024);
+            ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#ffffff';
+
+            if (type.includes('runic')) {
+                ctx.lineWidth = 10; ctx.strokeRect(50, 50, 924, 924);
+                ctx.font = '100px serif'; ctx.fillText('?', 400, 500);
+            } else {
+                ctx.lineWidth = 5;
+                for (let i = 0; i < 50; i++) { ctx.beginPath(); ctx.arc(Math.random() * 1024, Math.random() * 1024, Math.random() * 50, 0, Math.PI * 2); ctx.stroke(); }
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function init3D() {
+            if (scene) return;
+            scene = new THREE.Scene();
+            const aspect = window.innerWidth / window.innerHeight;
+            camera = new THREE.PerspectiveCamera(35, aspect, 0.1, 1000);
+            camera.position.set(0, 35, 0); camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            diceCanvasContainer.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambient = new THREE.AmbientLight(0xffffff, 0.6); scene.add(ambient);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5); dirLight.position.set(10, 20, 5); scene.add(dirLight);
+            const backLight = new THREE.PointLight(diceColor, 2, 50); backLight.position.set(0, -5, 0); scene.add(backLight);
+
+            gltfLoader = new GLTFLoader();
+            textureLoader = new THREE.TextureLoader();
+        }
+
+        let diceBody = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), rot: new THREE.Vector3(), rotVel: new THREE.Vector3() };
+
+        function loadAtlasTexture(textureName, callback) {
+            if (loadedAtlas && loadedAtlas.name === textureName) {
+                callback(loadedAtlas);
+                return;
+            }
+
+            if (textureName.includes('.png') || textureName.includes('.jpg')) {
+                textureLoader.load(textureName, (tex) => {
+                    tex.flipY = false;
+                    tex.name = textureName;
+                    tex.colorSpace = THREE.SRGBColorSpace; // Correct color space
+                    loadedAtlas = tex;
+                    callback(tex);
+                }, undefined, (err) => {
+                    console.warn("Texture load failed:", err);
+                    loadedAtlas = generateProceduralTexture('procedural');
+                    loadedAtlas.name = 'procedural';
+                    callback(loadedAtlas);
+                });
+            } else {
+                loadedAtlas = generateProceduralTexture(textureName);
+                loadedAtlas.name = textureName;
+                callback(loadedAtlas);
+            }
+        }
+
+        window.trigger3DRoll = (sides) => {
+            // --- LOGICA RAPIDA (INSTANT ROLL) ---
+            // 1. Calcola il numero
+            const result = Math.floor(Math.random() * sides) + 1;
+
+            // 2. Inserisci nel testo (come faceva showResult)
+            const inputEl = document.getElementById('action-input');
+            const existing = inputEl.value;
+            inputEl.value = existing + (existing ? " " : "") + `[🎲d${sides}: ${result}]`;
+
+            // 3. Feedback sonoro e focus
+            playSound('click'); // Suono breve invece del rumore dei dadi
+            inputEl.focus();
+
+            // 4. Chiude il menu se era aperto (per il FAB)
+            const menu = document.getElementById('fab-dice-menu');
+            if (menu && !menu.classList.contains('hidden')) {
+                window.toggleDiceMenu();
+            }
+
+            /* --- VECCHIA LOGICA 3D (DISABILITATA TEMPORANEAMENTE) ---
+            const colorHex = document.getElementById('input-dice-color').value;
+            diceColor = new THREE.Color(colorHex);
+            const themeVal = document.getElementById('input-dice-theme').value;
+
+            init3D();
+            playSound('roll');
+            diceOverlay.classList.remove('hidden');
+            resultContainer.classList.add('opacity-0', 'scale-75'); resultContainer.classList.remove('opacity-100', 'scale-100');
+
+            if(diceMesh) scene.remove(diceMesh);
+            if(diceWire) scene.remove(diceWire);
+
+            loadAtlasTexture(themeVal, (atlasTexture) => {
+                // ... Codice caricamento texture e modelli ...
+                // ... (tutto il resto del codice 3D rimane qui commentato) ...
+                // Ricordati che dovresti commentare fino alla chiusura della vecchia funzione
+            });
+            --------------------------------------------------------- */
+        };
+
+        function createProceduralDice(sides, material) {
+            let geometry;
+            switch (sides) {
+                case 4: geometry = new THREE.TetrahedronGeometry(3); break;
+                case 6: geometry = new THREE.BoxGeometry(3.5, 3.5, 3.5); break;
+                case 8: geometry = new THREE.OctahedronGeometry(3); break;
+                case 10: geometry = new THREE.OctahedronGeometry(3); geometry.scale(1, 1.3, 1); break;
+                case 12: geometry = new THREE.DodecahedronGeometry(3); break;
+                default: geometry = new THREE.IcosahedronGeometry(3);
+            }
+            diceMesh = new THREE.Mesh(geometry, material);
+
+            const edges = new THREE.EdgesGeometry(geometry);
+            diceWire = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 }));
+            scene.add(diceMesh);
+            scene.add(diceWire);
+
+            startPhysics(sides);
+        }
+
+        function startPhysics(sides) {
+            const startX = (Math.random() > 0.5 ? -15 : 15);
+            diceBody.pos.set(startX, 10, (Math.random() - 0.5) * 5);
+            diceBody.vel.set(-startX * 0.04, -0.5, (Math.random() - 0.5) * 1.5);
+            diceBody.rotVel.set(Math.random() * 0.4, Math.random() * 0.4, Math.random() * 0.4);
+
+            diceMesh.position.copy(diceBody.pos);
+            if (diceWire) diceWire.position.copy(diceBody.pos);
+
+            const result = Math.floor(Math.random() * sides) + 1;
+            let bounces = 0;
+
+            function animate() {
+                diceBody.vel.multiplyScalar(0.97);
+                diceBody.rotVel.multiplyScalar(0.97);
+
+                diceBody.vel.x -= diceBody.pos.x * 0.005;
+                diceBody.vel.z -= diceBody.pos.z * 0.005;
+                diceBody.pos.add(diceBody.vel);
+
+                if (diceBody.pos.y <= -2) {
+                    diceBody.pos.y = -2; diceBody.vel.y *= -0.5; bounces++;
+                    diceBody.vel.x *= 0.8; diceBody.vel.z *= 0.8;
+                } else { diceBody.vel.y -= 0.05; }
+
+                const limit = 12;
+                if (diceBody.pos.x > limit) { diceBody.pos.x = limit; diceBody.vel.x *= -1; }
+                if (diceBody.pos.x < -limit) { diceBody.pos.x = -limit; diceBody.vel.x *= -1; }
+                if (diceBody.pos.z > 8) { diceBody.pos.z = 8; diceBody.vel.z *= -1; }
+                if (diceBody.pos.z < -8) { diceBody.pos.z = -8; diceBody.vel.z *= -1; }
+
+                diceMesh.rotation.x += diceBody.rotVel.x;
+                diceMesh.rotation.y += diceBody.rotVel.y;
+                diceMesh.rotation.z += diceBody.rotVel.z;
+
+                if (diceWire) {
+                    diceWire.rotation.copy(diceMesh.rotation);
+                    diceWire.position.copy(diceBody.pos);
+                }
+                diceMesh.position.copy(diceBody.pos);
+
+                renderer.render(scene, camera);
+
+                if (Math.abs(diceBody.vel.y) < 0.01 && Math.abs(diceBody.vel.x) < 0.01 && diceBody.pos.y <= -1.9 && bounces > 1) {
+                    cancelAnimationFrame(animationFrameId);
+                    showResult(result);
+                } else {
+                    animationFrameId = requestAnimationFrame(animate);
+                }
+            }
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        function showResult(result) {
+            resultText.innerText = result;
+            resultContainer.classList.remove('opacity-0', 'scale-75');
+            resultContainer.classList.add('opacity-100', 'scale-100');
+            const existing = els.actionInput.value;
+            els.actionInput.value = existing + (existing ? " " : "") + `[🎲: ${result}]`;
+        }
+
+        window.closeDiceOverlay = () => {
+            diceOverlay.classList.add('hidden');
+            cancelAnimationFrame(animationFrameId);
+            els.actionInput.focus();
+        };
+
+        // --- APP STATE ---
+        let db, app;
+        let myRole = null;
+        let campaignId = "";
+        let turnHistory = [];
+        let geminiKey = "";
+        let isDemoMode = false;
+
+        const els = {
+            actionInput: document.getElementById('action-input'),
+            gameUI: document.getElementById('game-ui'),
+            roleScreen: document.getElementById('role-screen')
+        };
+
+        window.startDemo = () => {
+            isDemoMode = true;
+            document.getElementById('settings-modal').classList.add('hidden');
+            window.selectRole('player1');
+            els.actionInput.value = "Demo Attiva.";
+        };
+
+        window.selectRole = (role) => {
+            // Check auth only if not demo
+            if (!isDemoMode && !db) return alert("DB non connesso. Usa Demo o Impostazioni.");
+
+            myRole = role;
+            document.getElementById('role-screen').classList.add('hidden');
+            document.getElementById('game-ui').classList.remove('hidden');
+            document.getElementById('game-ui').classList.add('flex');
+            document.getElementById('stats-bar').classList.remove('hidden');
+            document.getElementById('stats-bar').classList.add('grid');
+
+            if (!isDemoMode) listenToCampaign();
+        };
+
+        window.openSettings = () => document.getElementById('settings-modal').classList.remove('hidden');
+        window.closeSettings = () => document.getElementById('settings-modal').classList.add('hidden');
+
+        // --- FIREBASE & INIT LOGIC ---
+        window.addEventListener('load', loadConfigFromStorage);
+
+        function updatePlayerNamesUI() {
+            const p1Name = localStorage.getItem('p1_name') || 'Giocatore 1';
+            const p2Name = localStorage.getItem('p2_name') || 'Giocatore 2';
+
+            // Aggiorna Inputs Settings
+            if (document.getElementById('input-p1-name')) document.getElementById('input-p1-name').value = p1Name;
+            if (document.getElementById('input-p2-name')) document.getElementById('input-p2-name').value = p2Name;
+
+            // Aggiorna Schermata Ruoli
+            const roleP1 = document.querySelector("#role-screen h3.text-p1-blue");
+            const roleP2 = document.querySelector("#role-screen h3.text-p2-red");
+            if (roleP1) roleP1.innerText = p1Name;
+            if (roleP2) roleP2.innerText = p2Name;
+
+            // Aggiorna Stats Bar (Header)
+            const labelP1 = document.querySelector('#stats-bar .text-p1-blue span');
+            const labelP2 = document.querySelector('#stats-bar .text-p2-red span');
+            if (labelP1) labelP1.innerText = `🛡️ ${p1Name} HP`;
+            if (labelP2) labelP2.innerText = `🗡️ ${p2Name} HP`;
+        }
+
+        function loadConfigFromStorage() {
+            const storedKey = localStorage.getItem('gemini_api_key');
+            const storedFirebase = localStorage.getItem('firebase_config');
+            const storedCampaign = localStorage.getItem('campaign_id');
+            const storedDiceColor = localStorage.getItem('dice_color');
+            const storedTheme = localStorage.getItem('dice_theme');
+            const storedMode = localStorage.getItem('game_mode');
+            const storedAppTheme = localStorage.getItem('app_theme') || 'fantasy';
+            // NUOVO: Carica preferenza layout
+            const storedLayout = localStorage.getItem('text_layout') || 'full';
+            if (document.getElementById('input-text-layout')) {
+                document.getElementById('input-text-layout').value = storedLayout;
+            }
+
+            const storedAnimBg = localStorage.getItem('animated_bg') || 'on';
+            if (document.getElementById('input-animated-bg')) {
+                document.getElementById('input-animated-bg').value = storedAnimBg;
+            }
+
+            if (storedDiceColor) document.getElementById('input-dice-color').value = storedDiceColor;
+            if (storedTheme) document.getElementById('input-dice-theme').value = storedTheme;
+            if (storedMode) document.getElementById('input-game-mode').value = storedMode;
+
+            // Carica e applica il tema dell'app
+            document.getElementById('input-app-theme').value = storedAppTheme;
+            window.applyTheme(storedAppTheme);
+            updatePlayerNamesUI();
+
+            if (storedKey && storedFirebase) {
+                geminiKey = storedKey;
+                campaignId = storedCampaign || "campagna_pvp_01";
+                document.getElementById('input-api-key').value = storedKey;
+                document.getElementById('input-firebase-json').value = storedFirebase;
+                document.getElementById('input-campaign-id').value = campaignId;
+                try {
+                    const fbConfig = JSON.parse(storedFirebase);
+                    initFirebaseApp(fbConfig);
+                } catch (e) { window.openSettings(); }
+            } else { window.openSettings(); }
+        }
+
+        window.saveSettings = () => {
+            const key = document.getElementById('input-api-key').value.trim();
+            const fbRaw = document.getElementById('input-firebase-json').value.trim();
+            const camp = document.getElementById('input-campaign-id').value.trim();
+            const dColor = document.getElementById('input-dice-color').value;
+            const dTheme = document.getElementById('input-dice-theme').value;
+            const gMode = document.getElementById('input-game-mode').value;
+            const appTheme = document.getElementById('input-app-theme').value;
+
+            // Nuovi campi nomi (con fallback se vuoti o se l'elemento non esiste ancora nel DOM)
+            const p1NameEl = document.getElementById('input-p1-name');
+            const p2NameEl = document.getElementById('input-p2-name');
+            const p1Name = p1NameEl ? (p1NameEl.value.trim() || 'Giocatore 1') : 'Giocatore 1';
+            const p2Name = p2NameEl ? (p2NameEl.value.trim() || 'Giocatore 2') : 'Giocatore 2';
+            // NUOVO: Recupera valore layout
+            const textLayout = document.getElementById('input-text-layout').value;
+            const animBg = document.getElementById('input-animated-bg').value;
+
+            if (!key || !fbRaw) return;
+            try {
+                JSON.parse(fbRaw);
+                localStorage.setItem('gemini_api_key', key);
+                localStorage.setItem('firebase_config', fbRaw);
+                localStorage.setItem('campaign_id', camp);
+                localStorage.setItem('dice_color', dColor);
+                localStorage.setItem('dice_theme', dTheme);
+                localStorage.setItem('game_mode', gMode);
+                localStorage.setItem('app_theme', appTheme);
+                localStorage.setItem('animated_bg', animBg);
+
+                // Salvataggio nomi
+                localStorage.setItem('p1_name', p1Name);
+                localStorage.setItem('p2_name', p2Name);
+                // NUOVO: Salva preferenza
+                localStorage.setItem('text_layout', textLayout);
+
+                window.applyTheme(appTheme);
+                updatePlayerNamesUI(); // Aggiorna UI immediatamente
+                window.closeSettings();
+                location.reload(); // Ricarica per applicare modifiche profonde
+            } catch (e) { alert("JSON invalido"); }
+        };
+
+        function initFirebaseApp(config) {
+            try {
+                app = initializeApp(config);
+                db = getFirestore(app);
+                document.getElementById('connection-status').classList.remove("bg-gray-500");
+                document.getElementById('connection-status').classList.add("bg-green-500", "shadow-[0_0_10px_#4ade80]");
+            } catch (e) { alert("Config Error"); window.openSettings(); }
+        }
+
+
+        function listenToCampaign() {
+            const docRef = doc(db, "campaigns", campaignId);
+            onSnapshot(docRef, (docSnap) => {
+                if (!docSnap.exists()) { initializeGame(docRef); return; }
+                const data = docSnap.data();
+                handleGameUpdate(data);
+                if (data.stats) {
+                    if (document.activeElement !== document.getElementById('hp-p1')) document.getElementById('hp-p1').value = data.stats.p1_hp || 100;
+                    if (document.activeElement !== document.getElementById('hp-p2')) document.getElementById('hp-p2').value = data.stats.p2_hp || 100;
+                }
+            });
+        }
+
+        async function initializeGame(ref) {
+            await setDoc(ref, {
+                history: [],
+                stats: { p1_hp: 100, p2_hp: 100 },
+                current_turn: { turn_number: 1, p1_action: null, p2_action: null, status: 'waiting' }
+            });
+        }
+
+        function handleGameUpdate(data) {
+            const turn = data.current_turn;
+            const newHistoryLength = (data.history || []).length;
+
+            // Suono di notifica solo se c'è un nuovo capitolo
+            if (newHistoryLength > turnHistory.length) {
+                playSound('turn_ready');
+            }
+            turnHistory = data.history || [];
+
+            renderHistory(turnHistory);
+
+            const myAction = myRole === 'player1' ? turn.p1_action : turn.p2_action;
+            const enemyAction = myRole === 'player1' ? turn.p2_action : turn.p1_action;
+
+            // GESTIONE UI "PROCESSING"
+            if (turn.status === 'processing') {
+                document.getElementById('processing-overlay').classList.remove('hidden');
+                els.actionInput.disabled = true;
+                return; // Se sta caricando, fermiamoci qui per tutti
+            } else {
+                document.getElementById('processing-overlay').classList.add('hidden');
+            }
+
+            // GESTIONE UI INPUT
+            if (myAction) {
+                // Ho già mosso
+                els.actionInput.value = "";
+                els.actionInput.disabled = true;
+                els.actionInput.placeholder = "Azione registrata. In attesa...";
+                document.getElementById('send-btn').disabled = true;
+                document.getElementById('send-btn').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('my-status').innerText = "STATO: PRONTO";
+            } else {
+                // Devo ancora muovere
+                els.actionInput.disabled = false;
+                els.actionInput.placeholder = "Descrivi la tua azione...";
+                document.getElementById('send-btn').disabled = false;
+                document.getElementById('send-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('my-status').innerText = "STATO: IN ATTESA DI INPUT";
+            }
+
+            // --- GESTIONE DINAMICA ETICHETTA (PvP vs Co-op) ---
+            const gameMode = localStorage.getItem('game_mode') || 'pvp';
+            const otherLabel = gameMode === 'coop' ? "ALLEATO" : "NEMICO";
+            const shadowText = gameMode === 'coop' ? "in ascolto..." : "in ombra...";
+
+            const enemyStatusEl = document.getElementById('enemy-status');
+
+            if (enemyAction) {
+                enemyStatusEl.innerText = `${otherLabel} PRONTO`;
+                enemyStatusEl.classList.add("text-dnd-gold", "font-bold", "animate-pulse");
+                enemyStatusEl.classList.remove("text-gray-600", "italic");
+            } else {
+                enemyStatusEl.innerText = `${otherLabel} ${shadowText}`;
+                enemyStatusEl.classList.remove("text-dnd-gold", "font-bold", "animate-pulse");
+                enemyStatusEl.classList.add("text-gray-600", "italic");
+            }
+
+            // --- FIX DOPPIA CHIAMATA ---
+            // Controlliamo se entrambi sono pronti E se lo stato è 'waiting' (non sta già lavorando)
+            if (myAction && enemyAction && turn.status === 'waiting') {
+
+                // REGOLA D'ORO: Solo il Player 1 chiama l'API.
+                // Il Player 2 aspetta passivamente.
+                if (myRole === 'player1') {
+                    console.log("Sono il Player 1: Evoco il Master.");
+                    triggerGemini(data);
+                } else {
+                    console.log("Sono il Player 2: Aspetto che P1 evochi il Master.");
+                    // Opzionale: Mostra un loader locale per P2 mentre aspetta che P1 faccia partire la chiamata
+                    document.getElementById('processing-overlay').classList.remove('hidden');
+                }
+            }
+        }
+
+        function renderHistory(history) {
+            const container = document.getElementById('chat-history');
+            container.innerHTML = "";
+            // RECUPERA LA PREFERENZA
+            const currentLayout = localStorage.getItem('text_layout') || 'full';
+            // Se è focus usa max-width e margin auto, altrimenti usa larghezza piena
+            const layoutClasses = currentLayout === 'focus' ? 'max-w-3xl mx-auto' : 'w-full';
+            const introDiv = document.createElement('div');
+            introDiv.className = "text-center text-gray-500 text-xs uppercase tracking-widest font-mono mb-8 opacity-50";
+            introDiv.innerText = "--- INIZIO DELLE CRONACHE ---";
+            container.appendChild(introDiv);
+
+            history.forEach((turn, idx) => {
+                const card = document.createElement('div');
+                // MODIFICA QUI: Aggiungiamo 'layoutClasses' alla lista delle classi
+                card.className = `story-card p-6 mb-6 ${layoutClasses}`;
+
+                card.innerHTML = `
+                    <div class="mb-4 pb-2 border-b border-gray-700/50 flex justify-between items-baseline relative z-10">
+                    <span class="font-title font-bold text-lg" style="color: var(--accent-main)">CAPITOLO ${idx + 1}</span>
+                    <span class="text-xs text-gray-500 font-mono">Turno ${turn.turn_number || idx}</span>
+                </div>
+            
+                <div class="mb-4 text-gray-300 leading-relaxed font-body text-lg tracking-wide relative z-10">
+                    ${turn.public_event}
+                </div>
+                `;
+
+                const mySecret = myRole === 'player1' ? turn.p1_private : turn.p2_private;
+                const secretColorVar = myRole === 'player1' ? 'var(--p1-color)' : 'var(--p2-color)';
+
+                // Box Privato con stile migliorato
+                const secretBox = document.createElement('div');
+                secretBox.className = "private-box relative z-10 text-sm font-body";
+                secretBox.style.borderLeftColor = secretColorVar;
+                secretBox.style.color = "rgba(255,255,255,0.9)";
+
+                secretBox.innerHTML = `
+                    <div class="flex items-center gap-2 mb-1" style="color: ${secretColorVar}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        <span class="uppercase text-xs tracking-widest font-bold">Sussurri dell'Ombra</span>
+                    </div>
+                    ${mySecret}
+                `;
+
+                card.appendChild(secretBox);
+                container.appendChild(card);
+            });
+
+            // Auto-scroll fluido
+            requestAnimationFrame(() => {
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            });
+        }
+
+        window.submitAction = async () => {
+            let text = els.actionInput.value.trim();
+            if (!text) return;
+            playSound('click');
+            els.actionInput.disabled = true;
+            document.getElementById('send-btn').disabled = true;
+
+            if (isDemoMode) {
+                document.getElementById('processing-overlay').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('processing-overlay').classList.add('hidden');
+                    turnHistory.push({
+                        public_event: "RISPOSTA DEMO: " + text,
+                        p1_private: "Info demo P1", p2_private: "Info demo P2"
+                    });
+                    renderHistory(turnHistory);
+                    els.actionInput.disabled = false;
+                    document.getElementById('send-btn').disabled = false;
+                    els.actionInput.value = ""; els.actionInput.focus();
+                }, 2000);
+                return;
+            }
+
+            const docRef = doc(db, "campaigns", campaignId);
+            const field = myRole === 'player1' ? "current_turn.p1_action" : "current_turn.p2_action";
+            await updateDoc(docRef, { [field]: text });
+        };
+
+        window.updateHP = async (who) => {
+            if (isDemoMode) return;
+            const val = document.getElementById(`hp-${who}`).value;
+            const docRef = doc(db, "campaigns", campaignId);
+            await updateDoc(docRef, { [`stats.${who}_hp`]: val });
+        };
+
+        window.resetCampaignData = async () => {
+            if (isDemoMode) return alert("Reset non disponibile in demo.");
+            if (!confirm("RESETTOTOTALE?")) return;
+            const docRef = doc(db, "campaigns", campaignId);
+            await setDoc(docRef, {
+                history: [],
+                stats: { p1_hp: 100, p2_hp: 100 },
+                current_turn: { turn_number: 1, p1_action: null, p2_action: null, status: 'waiting' }
+            });
+            window.closeSettings();
+        };
+
+        window.exportHistory = () => {
+            if (turnHistory.length === 0) return alert("Nulla!");
+            let txt = `CRONACA\n\n`;
+            turnHistory.forEach((t, i) => { txt += `T${i + 1}:\n${t.public_event}\n(Sec): ${t.p1_private} | ${t.p2_private}\n\n`; });
+            navigator.clipboard.writeText(txt).then(() => alert("Copiato!"));
+        };
+
+        async function triggerGemini(gameData) {
+            const docRef = doc(db, "campaigns", campaignId);
+            await updateDoc(docRef, { "current_turn.status": "processing" });
+
+            const h = gameData.history.slice(-3);
+            const t = gameData.current_turn;
+            const stats = gameData.stats || { p1_hp: 100, p2_hp: 100 };
+
+            const gameMode = localStorage.getItem('game_mode') || 'pvp';
+            const isSetupPhase = (gameData.history.length === 0);
+
+            // --- REGOLE DI STILE PER EVITARE RIASSUNTI ---
+            const WRITING_STYLE = `
+            DIRETTIVE DI SCRITTURA (OBBLIGATORIE):
+            1. VERBOSITÀ: Sii descrittivo e dettagliato. Non avere fretta.
+            2. "SHOW, DON'T TELL": Non dire "Il locandiere accetta". Scrivi il dialogo esatto: "Il locandiere annuisce, asciugandosi le mani sul grembiule: 'Va bene, ma voglio l'oro in anticipo'."
+            3. MAI RIASSUMERE I DIALOGHI DEI GIOCATORI: Se un giocatore scrive una frase tra virgolette, il PNG deve rispondere a tono, parola per parola.
+            4. TEMPO REALE: Risolvi solo l'azione immediata (i prossimi 10 secondi). Non proiettarti nel futuro. Lascia la scena aperta.
+            `;
+
+            let systemInstruction = "";
+
+            if (isSetupPhase) {
+                systemInstruction = `
+                SEI IL GAMEMASTER NELLA FASE DI CREAZIONE DEL MONDO (TURNO 0).
+                Gli input sono descrizioni. Uniscile in un'unica intro narrativa ricca e atmosferica ('public_event').
+                Nei campi privati descrivi i dettagli sensoriali unici per ogni personaggio.
+                `;
+            } else if (gameMode === 'pvp') {
+                systemInstruction = `
+                SEI IL MASTER DI UNO SCONTRO PVP.
+                ${WRITING_STYLE}
+                Descrivi l'impatto fisico ed emotivo di ogni colpo.
+                'public_event': Ciò che è visibile a tutti.
+                'private': Pensieri, dolore, strategia nascosta.
+                `;
+            } else {
+                systemInstruction = `
+                SEI IL MASTER DI UNA CAMPAGNA COOPERATIVA GDR.
+                ${WRITING_STYLE}
+                Gestisci la Prossemica:
+                - Se sono vicini: Narrazione condivisa in 'public_event'.
+                - Se sono lontani: Usa SOLO i campi 'private'. L'altro non deve sapere nulla.
+                `;
+            }
+
+            const prompt = `
+            ${systemInstruction}
+            
+            Status: P1 HP: ${stats.p1_hp}, P2 HP: ${stats.p2_hp}.
+            Contesto: ${JSON.stringify(h)}
+            
+            AZIONE P1: "${t.p1_action}"
+            AZIONE P2: "${t.p2_action}"
+            
+            Genera il prossimo turno in JSON rigoroso:
+            {
+                "public_event": "...",
+                "p1_private": "...",
+                "p2_private": "..."
+            }`;
+
+            try {
+                // Nota: Usiamo gemini-1.5-flash perché ha una context window ampia e segue bene le istruzioni complesse
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const json = await response.json();
+                let text = json.candidates[0].content.parts[0].text;
+                text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                const resultObj = JSON.parse(text);
+
+                await updateDoc(docRef, {
+                    history: arrayUnion(resultObj),
+                    current_turn: {
+                        turn_number: t.turn_number + 1,
+                        p1_action: null, p2_action: null, status: 'waiting'
+                    }
+                });
+            } catch (err) {
+                console.error(err);
+                alert("Errore del Master (API). Riprova.");
+                await updateDoc(docRef, { "current_turn.status": "waiting" });
+            }
+        }
+        // --- FUNZIONE DI EMERGENZA ---
+        window.forceUnlock = async () => {
+            // Controlla se il DB è inizializzato (ignora in demo)
+            if (!db && !isDemoMode) return alert("Database non connesso.");
+
+            if (!confirm("Questo sbloccherà forzatamente il Master se è rimasto bloccato su 'sta pensando'. Vuoi procedere?")) return;
+
+            const docRef = doc(db, "campaigns", campaignId);
+            try {
+                // Forziamo lo stato a 'waiting' così potete riprovare a inviare l'azione
+                await updateDoc(docRef, { "current_turn.status": "waiting" });
+                alert("Master sbloccato! Potete riprovare a inviare l'azione.");
+                window.closeSettings();
+            } catch (e) {
+                alert("Errore sblocco: " + e.message);
+                console.error(e);
+            }
+        };
+        // --- FAB LOGIC ---
+        window.toggleDiceMenu = () => {
+            const menu = document.getElementById('fab-dice-menu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                // Piccola animazione di entrata
+                setTimeout(() => menu.classList.remove('scale-90', 'opacity-0'), 10);
+            } else {
+                menu.classList.add('hidden', 'scale-90');
+            }
+        };
+
+        // Chiude il menu se si clicca fuori (Opzionale ma comodo)
+        window.addEventListener('click', (e) => {
+            const menu = document.getElementById('fab-dice-menu');
+            const btn = e.target.closest('button[onclick="window.toggleDiceMenu()"]');
+            const menuContent = e.target.closest('#fab-dice-menu');
+
+            if (!btn && !menuContent && !menu.classList.contains('hidden')) {
+                window.toggleDiceMenu();
+            }
+        });
+    </script>
+    <div class="fixed bottom-28 left-4 z-50 flex flex-col items-center">
+
+        <div id="fab-dice-menu"
+            class="hidden flex-col gap-2 bg-black/90 p-2 rounded-lg border border-dnd-gold shadow-2xl mb-3 backdrop-blur-md transition-all scale-90 origin-bottom">
+
+            <button onclick="window.trigger3DRoll(4); window.toggleDiceMenu()"
+                class="flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded transition text-dnd-gold font-fantasy text-xs tracking-widest w-full">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 20h20L12 2z" />
+                    <path d="M12 2v12" />
+                    <path d="M12 14L2 20" />
+                    <path d="M12 14l10 6" />
+                </svg>
+                D4
+            </button>
+
+            <button onclick="window.trigger3DRoll(6); window.toggleDiceMenu()"
+                class="flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded transition text-dnd-gold font-fantasy text-xs tracking-widest w-full">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16.5L12 21L3 16.5V7.5L12 3l9 4.5V16.5z" />
+                    <path d="M12 3v9" />
+                    <path d="M12 12l9 4.5" />
+                    <path d="M12 12l-9 4.5" />
+                </svg>
+                D6
+            </button>
+
+            <button onclick="window.trigger3DRoll(8); window.toggleDiceMenu()"
+                class="flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded transition text-dnd-gold font-fantasy text-xs tracking-widest w-full">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 12l10 10 10-10L12 2z" />
+                    <path d="M12 2v20" />
+                    <path d="M2 12l10 3 10-3" />
+                </svg>
+                D8
+            </button>
+
+            <button onclick="window.trigger3DRoll(10); window.toggleDiceMenu()"
+                class="flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded transition text-dnd-gold font-fantasy text-xs tracking-widest w-full">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 8l10 14 10-14L12 2z" />
+                    <path d="M12 2v20" />
+                    <path d="M2 8l10 4 10-4" />
+                </svg>
+                D10
+            </button>
+
+            <button onclick="window.trigger3DRoll(12); window.toggleDiceMenu()"
+                class="flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded transition text-dnd-gold font-fantasy text-xs tracking-widest w-full">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2l9 6.5v10.5l-9 6-9-6V8.5L12 2z" />
+                    <path d="M12 7l4 3v5l-4 3-4-3v-5l4-3z" />
+                    <path d="M12 2v5" />
+                    <path d="M21 8.5l-5 1.5" />
+                    <path d="M21 19l-5-1.5" />
+                    <path d="M12 25v-5" />
+                    <path d="M12 22l0-4" />
+                    <path d="M3 19l5-1.5" />
+                    <path d="M3 8.5l5 1.5" />
+                </svg>
+                D12
+            </button>
+
+            <button onclick="window.trigger3DRoll(20); window.toggleDiceMenu()"
+                class="flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded transition text-dnd-gold font-fantasy text-xs tracking-widest w-full font-bold bg-dnd-gold/10">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" />
+                    <path d="M12 2v4" />
+                    <path d="M12 6L7 14h10l-5-8z" />
+                    <path d="M3 7l4 7" />
+                    <path d="M21 7l-4 7" />
+                    <path d="M3 17l4-3" />
+                    <path d="M21 17l-4-3" />
+                    <path d="M12 22l-5-8" />
+                    <path d="M12 22l5-8" />
+                </svg>
+                D20
+            </button>
+        </div>
+
+        <button onclick="window.toggleDiceMenu()"
+            class="w-14 h-14 rounded-full bg-dnd-panel border-2 border-dnd-gold text-dnd-gold shadow-[0_0_20px_rgba(197,160,89,0.4)] hover:scale-110 hover:shadow-[0_0_30px_rgba(197,160,89,0.6)] transition-all flex items-center justify-center z-50 group">
+            <svg class="w-8 h-8 group-hover:rotate-180 transition-transform duration-500" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2L3 7v10l9 5 9-5V7l-9-5z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6L7 14h10l-5-8z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7l4 7" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 7l-4 7" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 17l4-3" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 17l-4-3" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 22l-5-8" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 22l5-8" />
+            </svg>
+        </button>
+    </div>
+</body>
+
+</html>
