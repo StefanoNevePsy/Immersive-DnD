@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportHeight="108"
+    android:viewportWidth="108">
+    <!-- D20 dice icon from favicon, scaled to fit safe zone (72x72 centered in 108x108) -->
+    <!-- Original viewBox: 0 0 24 24, scale factor: 3, offset: 18 -->
+    <group
+        android:translateX="18"
+        android:translateY="18"
+        android:scaleX="3"
+        android:scaleY="3">
+        <!-- Main hexagon body -->
+        <path
+            android:pathData="M12,2L3,7v10l9,5 9,-5L21,7l-9,-5z"
+            android:strokeColor="#c5a059"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+        <!-- Top line -->
+        <path
+            android:pathData="M12,2v4"
+            android:strokeColor="#c5a059"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+        <!-- Inner triangle -->
+        <path
+            android:pathData="M12,6L7,14h10l-5,-8z"
+            android:strokeColor="#c5a059"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+        <!-- Left diagonal -->
+        <path
+            android:pathData="M3,7l4,7"
+            android:strokeColor="#c5a059"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+        <!-- Right diagonal -->
+        <path
+            android:pathData="M21,7l-4,7"
+            android:strokeColor="#c5a059"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+        <!-- Left bottom -->
+        <path
+            android:pathData="M3,17l4,-3"
+            android:strokeColor="#c5a059"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+        <!-- Right bottom -->
+        <path
+            android:pathData="M21,17l-4,-3"
+            android:strokeColor="#c5a059"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+        <!-- Bottom left -->
+        <path
+            android:pathData="M12,22l-5,-8"
+            android:strokeColor="#c5a059"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+        <!-- Bottom right -->
+        <path
+            android:pathData="M12,22l5,-8"
+            android:strokeColor="#c5a059"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:fillColor="#00000000" />
+    </group>
+</vector>

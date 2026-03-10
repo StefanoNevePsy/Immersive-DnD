@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cronache DnD</string>
+    <string name="title_activity_main">Cronache DnD</string>
+    <string name="package_name">com.cronachednd.app</string>
+    <string name="custom_url_scheme">com.cronachednd.app</string>
+</resources>
